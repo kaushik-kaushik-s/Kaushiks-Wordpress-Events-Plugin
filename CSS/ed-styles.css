@@ -1,11 +1,31 @@
-function ed_output_custom_styles() {
-    $colors = get_option( 'ed_colors' );
-    $custom_css = "
-        .ed-event-item {
-            background-color: {$colors['background']};
-            color: {$colors['text']};
-        }
-    ";
-    wp_add_inline_style( 'ed-styles', $custom_css );
+
+/* General Styles */
+.ed-events-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
 }
-add_action( 'wp_enqueue_scripts', 'ed_output_custom_styles' );
+.ed-event-item {
+    width: calc(33.333% - 20px);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+.ed-event-item h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+.ed-event-item img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+.ed-single-event {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.ed-single-event h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
