@@ -179,5 +179,17 @@ function ed_single_template( $single ) {
     return $single;
 }
 add_filter( 'single_template', 'ed_single_template' );
+
+function ed_output_custom_styles() {
+    $colors = get_option( 'ed_colors' );
+    $custom_css = "
+        .ed-event-item {
+            background-color: {$colors['background']};
+            color: {$colors['text']};
+        }
+    ";
+    wp_add_inline_style( 'ed-styles', $custom_css );
+}
+add_action( 'wp_enqueue_scripts', 'ed_output_custom_styles' );
 <?php>
 
