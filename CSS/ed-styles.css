@@ -25,3 +25,27 @@
     font-size: 0.9em;
     margin-bottom: 10px;
 }
+
+/* Single Event Styles */
+.ed-single-event {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+}
+.ed-single-event h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+.ed-single-event p {
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+.ed-single-event img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+.ed-single-event div {
+    line-height: 1.6;
+}
