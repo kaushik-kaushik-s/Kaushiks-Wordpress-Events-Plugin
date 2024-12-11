@@ -168,3 +168,16 @@ function ed_enqueue_front_scripts() {
 }
 add_action( 'wp_enqueue_scripts', 'ed_enqueue_front_scripts' );
 
+function ed_single_template( $single ) {
+    global $post;
+
+    if ( $post->post_type == 'event' ) {
+        if ( file_exists( plugin_dir_path( __FILE__ ) . 'templates/single-event.php' ) ) {
+            return plugin_dir_path( __FILE__ ) . 'templates/single-event.php';
+        }
+    }
+    return $single;
+}
+add_filter( 'single_template', 'ed_single_template' );
+<?php>
+
