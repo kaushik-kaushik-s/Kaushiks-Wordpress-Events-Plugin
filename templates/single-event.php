@@ -7,7 +7,9 @@
         ?>
         <h1><?php the_title(); ?></h1>
         <p><?php echo esc_html( date( 'F j, Y', strtotime( $event_date ) ) ); ?></p>
-        <?php if ( has_post_thumbnail() ) { the_post_thumbnail(); } ?>
+        <?php if ( has_post_thumbnail() ) {
+            the_post_thumbnail( 'large' );
+        } ?>
         <div><?php the_content(); ?></div>
     <?php endwhile; ?>
 </div>
