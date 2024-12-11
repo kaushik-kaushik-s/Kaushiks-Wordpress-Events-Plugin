@@ -1,31 +1,27 @@
-
-/* General Styles */
+/* Events List Styles */
 .ed-events-list {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
+    margin-top: 30px;
 }
 .ed-event-item {
     width: calc(33.333% - 20px);
     padding: 15px;
     border-radius: 8px;
     text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 .ed-event-item h2 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
+    font-size: 1.25em;
+    margin: 10px 0;
 }
 .ed-event-item img {
     max-width: 100%;
     height: auto;
     border-radius: 5px;
 }
-.ed-single-event {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
-.ed-single-event h1 {
-    font-size: 2em;
+.ed-event-item p {
+    font-size: 0.9em;
     margin-bottom: 10px;
 }
