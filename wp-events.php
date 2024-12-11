@@ -172,3 +172,100 @@ function ed_enqueue_front_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'ed_enqueue_front_assets' );
 
+// Get Events Data
+function ed_get_events_data() {
+    $args = array(
+        'post_type'      => 'event',
+        'posts_per_page' => -1,
+        'meta_key'       => '_ed_event_date',
+        'orderby'        => 'meta_value',
+        'order'          => 'ASC',
+    );
+    $events = new WP_Query( $args );
+    $events_data = array();
+    while ( $events->have_posts() ) {
+        $events->the_post();
+        $event_date = get_post_meta( get_the_ID(), '_ed_event_date', true );
+        $events_data[] = array(
+            'title' => get_the_title(),
+            'start' => $event_date,
+            'url'   => get_permalink(),
+        );
+    }
+    wp_reset_postdata();
+    return $events_data;
+}
+
+// Shortcode to Display Calendar and Events
+function ed_events_shortcode() {
+    ob_start();
+    ?>
+    <!-- Calendar -->
+    <div id="ed-calendar"></div>
+
+    <!-- Events List -->
+    <div class="ed-events-list">
+        <?php
+        $args = array(
+            'post_type'      => 'event',
+            'posts_per_page' => -1,
+            'meta_key'       => '_ed_event_date',
+            'orderby'        => 'meta_value',
+            'order'          => 'DESC',
+        );
+        $events = new WP_Query( $args );
+        while ( $events->have_posts() ) {
+            $events->the_post();
+            $event_date = get_post_meta( get_the_ID(), '_ed_event_date', true );
+            ?>
+            <div class="ed-event-item">
+                <a href="<?php the_permalink(); ?>">
+                    <?php if ( has_post_thumbnail() ) {
+                        the_post_thumbnail( 'medium' );
+                    } ?>
+                    <h2><?php the_title(); ?></h2>
+                </a>
+                <p><?php echo esc_html( date( 'F j, Y', strtotime( $event_date ) ) ); ?></p>
+                <div><?php the_excerpt(); ?></div>
+            </div>
+            <?php
+        }
+        wp_reset_postdata();
+        ?>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode( 'events_directory', 'ed_events_shortcode' );
+
+// Apply Custom Styles
+function ed_output_custom_styles() {
+    $colors = get_option( 'ed_colors' );
+    $background_color = $colors['background'] ?? '#ffffff';
+    $text_color = $colors['text'] ?? '#000000';
+
+    $custom_css = "
+    .ed-event-item {
+        background-color: {$background_color};
+        color: {$text_color};
+    }
+    .ed-event-item a {
+        color: {$text_color};
+    }
+    ";
+    wp_add_inline_style( 'ed-styles', $custom_css );
+}
+add_action( 'wp_enqueue_scripts', 'ed_output_custom_styles' );
+
+// Use Custom Template for Single Event
+function ed_single_event_template( $single_template ) {
+    global $post;
+
+    if ( 'event' === $post->post_type ) {
+        $single_template = plugin_dir_path( __FILE__ ) . 'templates/single-event.php';
+    }
+    return $single_template;
+}
+add_filter( 'single_template', 'ed_single_event_template' );
+
+
