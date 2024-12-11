@@ -34,7 +34,6 @@ function ed_register_event_post_type() {
     register_post_type( 'event', $args );
 }
 add_action( 'init', 'ed_register_event_post_type' );
-
 // Add Meta Box for Event Date
 function ed_add_event_meta_boxes() {
     add_meta_box(
@@ -146,6 +145,27 @@ function ed_text_color_callback() {
     <?php
 }
 
+// Enqueue Calendar Assets Only When Calendar Shortcode Is Used
+function ed_enqueue_calendar_assets() {
+    if ( ! is_singular() && ! is_page() ) {
+        return;
+    }
+
+    global $post;
+    if ( has_shortcode( $post->post_content, 'events_calendar' ) ) {
+        // Enqueue FullCalendar CSS and JS
+        wp_enqueue_style( 'fullcalendar-css', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.css' );
+        wp_enqueue_script( 'fullcalendar-js', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js', array(), null, true );
+
+        // Enqueue Custom Calendar Script
+        wp_enqueue_script( 'ed-calendar', plugin_dir_url( __FILE__ ) . 'js/ed-calendar.js', array( 'fullcalendar-js' ), false, true );
+
+        // Localize Events Data
+        wp_localize_script( 'ed-calendar', 'edEventsData', ed_get_events_data() );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'ed_enqueue_calendar_assets' );
+
 // Enqueue Admin Scripts and Styles
 function ed_enqueue_admin_assets( $hook ) {
     if ( 'settings_page_ed-settings' != $hook ) {
@@ -178,7 +198,7 @@ function ed_get_events_data() {
         'post_type'      => 'event',
         'posts_per_page' => -1,
         'meta_key'       => '_ed_event_date',
-        'orderby'        => 'meta_value',
+        'orderby'        => 'meta_value_num',
         'order'          => 'ASC',
     );
     $events = new WP_Query( $args );
@@ -196,60 +216,91 @@ function ed_get_events_data() {
     return $events_data;
 }
 
-// Shortcode to Display Calendar and Events
-function ed_events_shortcode() {
+function ed_previous_events_shortcode() {
+    ob_start();
+
+    // Query Past Events
+    $today = date('Y-m-d');
+    $args = array(
+        'post_type'      => 'event',
+        'posts_per_page' => -1,
+        'meta_key'       => '_ed_event_date',
+        'orderby'        => 'meta_value_num',
+        'order'          => 'DESC',
+        'meta_query'     => array(
+            array(
+                'key'     => '_ed_event_date',
+                'value'   => $today,
+                'compare' => '<',
+                'type'    => 'DATE',
+            ),
+        ),
+    );
+    $events = new WP_Query( $args );
+
+    if ( $events->have_posts() ) {
+        echo '<div class="ed-events-list">';
+        echo '<h2>Previous Events</h2>';
+        
+        echo '<div class="ed-dates-container">';
+
+        while ( $events->have_posts() ) {
+            $events->the_post();
+            $event_date = get_post_meta( get_the_ID(), '_ed_event_date', true );
+            $event_date_formatted = date( 'F j, Y', strtotime( $event_date ) );
+
+            echo '<div class="ed-event-item">';
+            echo '<h3>' . esc_html( $event_date_formatted ) . '</h3>';
+            echo '<a href="' . get_permalink() . '">';
+            if ( has_post_thumbnail() ) {
+                echo get_the_post_thumbnail( get_the_ID(), 'event-thumbnail' );
+            } else {
+                echo '<img src="' . plugin_dir_url( __FILE__ ) . 'images/default-thumbnail.png" alt="' . get_the_title() . '" />';
+            }
+            echo '</a>';
+            echo '<h4>' . get_the_title() . '</h4>';
+            echo '</div>';
+        }
+
+        echo '</div></div>';
+    } else {
+        echo '<p>No previous events found.</p>';
+    }
+    wp_reset_postdata();
+
+    return ob_get_clean();
+}
+add_shortcode('previous_events','ed_previous_events_shortcode');
+
+function ed_setup_theme() {
+    add_theme_support( 'post-thumbnails' );
+    add_image_size( 'event-thumbnail', 100, 100, true ); // Crop to 100x100 pixels
+}
+add_action( 'after_setup_theme', 'ed_setup_theme' );
+
+function ed_calendar_shortcode() {
     ob_start();
     ?>
     <!-- Calendar -->
     <div id="ed-calendar"></div>
-
-    <!-- Events List -->
-    <div class="ed-events-list">
-        <?php
-        $args = array(
-            'post_type'      => 'event',
-            'posts_per_page' => -1,
-            'meta_key'       => '_ed_event_date',
-            'orderby'        => 'meta_value',
-            'order'          => 'DESC',
-        );
-        $events = new WP_Query( $args );
-        while ( $events->have_posts() ) {
-            $events->the_post();
-            $event_date = get_post_meta( get_the_ID(), '_ed_event_date', true );
-            ?>
-            <div class="ed-event-item">
-                <a href="<?php the_permalink(); ?>">
-                    <?php if ( has_post_thumbnail() ) {
-                        the_post_thumbnail( 'medium' );
-                    } ?>
-                    <h2><?php the_title(); ?></h2>
-                </a>
-                <p><?php echo esc_html( date( 'F j, Y', strtotime( $event_date ) ) ); ?></p>
-                <div><?php the_excerpt(); ?></div>
-            </div>
-            <?php
-        }
-        wp_reset_postdata();
-        ?>
-    </div>
     <?php
     return ob_get_clean();
 }
-add_shortcode( 'events_directory', 'ed_events_shortcode' );
+add_shortcode( 'events_calendar', 'ed_calendar_shortcode' );
 
 // Apply Custom Styles
 function ed_output_custom_styles() {
     $colors = get_option( 'ed_colors' );
-    $background_color = $colors['background'] ?? '#ffffff';
-    $text_color = $colors['text'] ?? '#000000';
+    $background_color = $colors['background'] ?? '#f9f9f9';
+    $text_color = $colors['text'] ?? '#333333';
 
     $custom_css = "
     .ed-event-item {
         background-color: {$background_color};
-        color: {$text_color};
     }
-    .ed-event-item a {
+    .ed-event-item h4,
+    .ed-events-list h2,
+    .ed-events-list h3 {
         color: {$text_color};
     }
     ";
