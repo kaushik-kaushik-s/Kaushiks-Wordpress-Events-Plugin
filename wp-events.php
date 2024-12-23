@@ -130,4 +130,13 @@ function ed_flush_rewrite_rules() {
     flush_rewrite_rules();
 }
 register_activation_hook(__FILE__, 'ed_flush_rewrite_rules');
+
+// Include template for event category archives
+function ed_include_template($template) {
+    if (is_tax('event_category')) {
+        $template = plugin_dir_path(__FILE__) . 'templates/taxonomy-event_category.php';
+    }
+    return $template;
+}
+add_filter('template_include', 'ed_include_template');
 ?>
