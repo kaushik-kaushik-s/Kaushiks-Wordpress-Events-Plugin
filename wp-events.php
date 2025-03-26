@@ -21,12 +21,12 @@ class SimpleEventsManager {
     }
 
     public function init() {
-=        SimpleEventsPostType::register_post_type();
+        SimpleEventsPostType::register_post_type();
         SimpleEventsTaxonomies::register_taxonomies();
     }
 
     public function enqueue_admin_scripts() {
-=        wp_enqueue_script('jquery-ui-datepicker');
+        wp_enqueue_script('jquery-ui-datepicker');
         wp_enqueue_style('jquery-ui-css', 'https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css');
     }
 
